@@ -131,7 +131,8 @@ async fn uninstall_wake_helper() -> Result<String, String> {
     linux::uninstall_helper()
 }
 
-/// Aktualisiert den Wake-Schedule (schreibt schedule.json für den Helper)
+/// Aktualisiert den naechsten Wecker: immer in ~/.config/weckpilot/next-alarm.json
+/// (fuer das Desklet), bei installiertem Helper zusaetzlich in schedule.json.
 #[tauri::command]
 fn update_wake_schedule(
     next_wake: Option<String>,
@@ -142,7 +143,11 @@ fn update_wake_schedule(
         Some(wake) => format!("Wake schedule updated: {}", wake),
         None => "Wake schedule disabled".to_string(),
     };
-    linux::write_schedule(&wake_schedule_json(next_wake, alarm_time, label)?)?;
+    let json = wake_schedule_json(next_wake, alarm_time, label)?;
+    linux::write_user_status(&json)?;
+    if linux::helper_installed() {
+        linux::write_schedule(&json)?;
+    }
     Ok(message)
 }
 

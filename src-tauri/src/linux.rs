@@ -235,6 +235,25 @@ pub fn uninstall_helper() -> Result<String, String> {
 
 /// Das Verzeichnis gehoert root; die App darf nur die vom Installer
 /// angelegte, ihr gehoerende `schedule.json` ueberschreiben.
+/// Datei mit dem naechsten Wecker fuer andere Programme (z. B. das Nebel-Desklet).
+pub fn user_status_file() -> Option<PathBuf> {
+    let config = std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .filter(|p| p.is_absolute())
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))?;
+    Some(config.join("weckpilot").join("next-alarm.json"))
+}
+
+/// Schreibt die Datei atomar, damit Leser nie einen halben Stand sehen.
+pub fn write_user_status(json: &str) -> Result<(), String> {
+    let file = user_status_file().ok_or("No config directory")?;
+    let dir = file.parent().ok_or("No config directory")?;
+    std::fs::create_dir_all(dir).map_err(|e| format!("Cannot create {}: {}", dir.display(), e))?;
+    let tmp = file.with_extension("json.tmp");
+    std::fs::write(&tmp, json).map_err(|e| format!("Cannot write status: {}", e))?;
+    std::fs::rename(&tmp, &file).map_err(|e| format!("Cannot write status: {}", e))
+}
+
 pub fn write_schedule(json: &str) -> Result<(), String> {
     if !Path::new(SCHEDULE_FILE).exists() {
         return Err("Wake Helper is not installed".to_string());

@@ -975,9 +975,7 @@ async function toggleWakeHelper() {
 async function syncWakeSchedule() {
     if (!tauriInvoke) return;
     try {
-        const installed = await tauriInvoke('is_wake_helper_installed');
-        if (!installed) return;
-        
+        // Auch ohne Weck-Helfer: die App legt den nächsten Wecker für das Desklet ab
         // Find the next enabled alarm
         const nextAlarm = AlarmManager.getNextAlarm();
         if (!nextAlarm) {
