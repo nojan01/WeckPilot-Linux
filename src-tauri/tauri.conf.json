@@ -45,12 +45,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "helpers/WeckPilotWakeHelper.swift",
-      "helpers/de.little-tools.weckpilot.wake-helper.plist",
-      "helpers/install.sh",
-      "helpers/uninstall.sh"
-    ],
     "category": "Utility",
     "shortDescription": "WeckPilot – modern alarm clock with weekly schedules",
     "longDescription": "WeckPilot is a modern alarm clock with a digital display, multiple alarms per day, weekly schedules, gradually increasing volume, and English/German interface languages."

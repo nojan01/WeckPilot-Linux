@@ -132,6 +132,22 @@ const I18n = (() => {
         }
     };
 
+    /// Texte, die unter Linux vom Mac-Wortlaut abweichen.
+    const platformTranslations = {
+        linux: {
+            en: {
+                powerInactive: 'Prevents your computer from sleeping while an alarm is active',
+                powerActive: '✓ Computer sleep is being prevented',
+                wakeHelperDescription: 'Installs a system service that wakes your computer from suspend before an alarm rings.'
+            },
+            de: {
+                powerInactive: 'Verhindert den Ruhezustand des Rechners, solange ein Wecker aktiv ist',
+                powerActive: '✓ Ruhezustand des Rechners wird verhindert',
+                wakeHelperDescription: 'Installiert einen Systemdienst, der den Rechner vor einem Wecktermin aus dem Ruhezustand aufweckt.'
+            }
+        }
+    };
+
     let currentLanguage = 'en';
 
     function getNestedValue(object, path) {
@@ -146,7 +162,10 @@ const I18n = (() => {
     }
 
     function t(key, values = {}) {
-        const value = getNestedValue(translations[currentLanguage], key)
+        const platformTexts = platformTranslations[window.WeckPilotPlatform];
+        const value = getNestedValue(platformTexts?.[currentLanguage], key)
+            ?? getNestedValue(platformTexts?.en, key)
+            ?? getNestedValue(translations[currentLanguage], key)
             ?? getNestedValue(translations.en, key)
             ?? key;
         if (typeof value !== 'string') return key;

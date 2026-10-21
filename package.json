@@ -6,7 +6,8 @@
   "scripts": {
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "tauri:build:linux": "tauri build --bundles deb,appimage"
   },
   "keywords": ["alarm", "clock", "timer", "tauri"],
   "author": "Norbert Jander",

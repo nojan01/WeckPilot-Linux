@@ -1,5 +1,9 @@
 use serde::{Deserialize, Serialize};
+#[cfg(target_os = "macos")]
 use std::process::Command;
+
+#[cfg(target_os = "linux")]
+mod linux;
 
 // ============================================================
 // Sleep Prevention & Screen Wake
@@ -21,24 +25,30 @@ fn prevent_sleep(minutes: u32) -> Result<String, String> {
         }
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
     {
-        Err("Only supported on macOS".to_string())
+        linux::prevent_sleep(minutes)
     }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    {
+        let _ = minutes;
+        Err("Only supported on macOS and Linux".to_string())
+    }
+}
+
+/// Hebt die Schlafverhinderung auf. Unter macOS laeuft `caffeinate` bis zum
+/// eigenen Timeout weiter.
+#[tauri::command]
+fn allow_sleep() {
+    #[cfg(target_os = "linux")]
+    linux::allow_sleep();
 }
 
 /// Prüft ob die App Berechtigung hat, Schlaf zu verhindern
 #[tauri::command]
 fn check_sleep_permission() -> bool {
-    #[cfg(target_os = "macos")]
-    {
-        true
-    }
-
-    #[cfg(not(target_os = "macos"))]
-    {
-        false
-    }
+    cfg!(any(target_os = "macos", target_os = "linux"))
 }
 
 /// Weckt den Bildschirm auf (beendet Bildschirmschoner)
@@ -54,9 +64,14 @@ fn wake_screen() -> Result<String, String> {
         }
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
     {
-        Err("Only supported on macOS".to_string())
+        linux::wake_screen()
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    {
+        Err("Only supported on macOS and Linux".to_string())
     }
 }
 
@@ -64,29 +79,42 @@ fn wake_screen() -> Result<String, String> {
 // Wake Helper Management
 // ============================================================
 
+#[cfg(target_os = "macos")]
 const HELPER_BINARY: &str = "/usr/local/bin/WeckPilotWakeHelper";
+#[cfg(target_os = "macos")]
 const HELPER_PLIST: &str = "/Library/LaunchDaemons/de.little-tools.weckpilot.wake-helper.plist";
+#[cfg(target_os = "macos")]
 const HELPER_LABEL: &str = "de.little-tools.weckpilot.wake-helper";
+#[cfg(target_os = "macos")]
 const SHARED_DIR: &str = "/Users/Shared/WeckPilot";
+#[cfg(target_os = "macos")]
 const SCHEDULE_FILE: &str = "/Users/Shared/WeckPilot/schedule.json";
 
 // Technische Altpfade bleiben lesbar, damit bestehende Installationen nach
 // der Umbenennung ohne Neuinstallation oder Verlust des Wake-Schedules laufen.
+#[cfg(target_os = "macos")]
 const LEGACY_HELPER_BINARY: &str = "/usr/local/bin/AlarmMasterWakeHelper";
+#[cfg(target_os = "macos")]
 const LEGACY_HELPER_PLIST: &str = "/Library/LaunchDaemons/com.alarmmaster.wake-helper.plist";
+#[cfg(target_os = "macos")]
 const LEGACY_HELPER_LABEL: &str = "com.alarmmaster.wake-helper";
+#[cfg(target_os = "macos")]
 const LEGACY_SHARED_DIR: &str = "/Users/Shared/AlarmMaster";
+#[cfg(target_os = "macos")]
 const LEGACY_SCHEDULE_FILE: &str = "/Users/Shared/AlarmMaster/schedule.json";
 
+#[cfg(target_os = "macos")]
 fn current_helper_installed() -> bool {
     std::path::Path::new(HELPER_BINARY).exists() && std::path::Path::new(HELPER_PLIST).exists()
 }
 
+#[cfg(target_os = "macos")]
 fn legacy_helper_installed() -> bool {
     std::path::Path::new(LEGACY_HELPER_BINARY).exists()
         && std::path::Path::new(LEGACY_HELPER_PLIST).exists()
 }
 
+#[cfg(target_os = "macos")]
 fn active_helper_paths() -> (&'static str, &'static str, &'static str) {
     if current_helper_installed() || !legacy_helper_installed() {
         (SHARED_DIR, SCHEDULE_FILE, HELPER_LABEL)
@@ -114,6 +142,59 @@ struct WakeHelperStatus {
     log_tail: Option<String>,
 }
 
+/// Liest Schedule und die letzten Log-Zeilen des Helpers aus dessen Verzeichnis.
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+fn read_helper_status(
+    installed: bool,
+    daemon_loaded: bool,
+    shared_dir: &str,
+    schedule_file: &str,
+) -> WakeHelperStatus {
+    let (has_schedule, next_wake) = if let Ok(data) = std::fs::read_to_string(schedule_file) {
+        if let Ok(schedule) = serde_json::from_str::<WakeSchedule>(&data) {
+            (
+                schedule.enabled && schedule.next_wake.is_some(),
+                schedule.next_wake,
+            )
+        } else {
+            (false, None)
+        }
+    } else {
+        (false, None)
+    };
+
+    let log_path = format!("{}/helper.log", shared_dir);
+    let log_tail = std::fs::read_to_string(&log_path).ok().map(|content| {
+        let lines: Vec<&str> = content.lines().collect();
+        let start = lines.len().saturating_sub(10);
+        lines[start..].join("\n")
+    });
+
+    WakeHelperStatus {
+        installed,
+        daemon_loaded,
+        has_schedule,
+        next_wake,
+        log_tail,
+    }
+}
+
+/// Serialisiert den Schedule fuer den Linux-Helper.
+#[cfg(target_os = "linux")]
+fn wake_schedule_json(
+    next_wake: Option<String>,
+    alarm_time: Option<String>,
+    label: Option<String>,
+) -> Result<String, String> {
+    let schedule = WakeSchedule {
+        enabled: next_wake.is_some(),
+        next_wake,
+        alarm_time,
+        label,
+    };
+    serde_json::to_string_pretty(&schedule).map_err(|e| format!("JSON error: {}", e))
+}
+
 /// Prüft ob der Wake Helper installiert ist
 #[tauri::command]
 fn is_wake_helper_installed() -> bool {
@@ -122,7 +203,12 @@ fn is_wake_helper_installed() -> bool {
         current_helper_installed() || legacy_helper_installed()
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
+    {
+        linux::helper_installed()
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     false
 }
 
@@ -141,42 +227,20 @@ fn get_wake_helper_status() -> WakeHelperStatus {
             .map(|o| String::from_utf8_lossy(&o.stdout).contains(helper_label))
             .unwrap_or(false);
 
-        // Read current schedule
-        let (has_schedule, next_wake) = if let Ok(data) = std::fs::read_to_string(schedule_file) {
-            if let Ok(schedule) = serde_json::from_str::<WakeSchedule>(&data) {
-                (
-                    schedule.enabled && schedule.next_wake.is_some(),
-                    schedule.next_wake,
-                )
-            } else {
-                (false, None)
-            }
-        } else {
-            (false, None)
-        };
-
-        // Read last few lines of log
-        let log_path = format!("{}/helper.log", shared_dir);
-        let log_tail = std::fs::read_to_string(&log_path).ok().map(|content| {
-            let lines: Vec<&str> = content.lines().collect();
-            let start = if lines.len() > 10 {
-                lines.len() - 10
-            } else {
-                0
-            };
-            lines[start..].join("\n")
-        });
-
-        WakeHelperStatus {
-            installed,
-            daemon_loaded,
-            has_schedule,
-            next_wake,
-            log_tail,
-        }
+        read_helper_status(installed, daemon_loaded, shared_dir, schedule_file)
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
+    {
+        read_helper_status(
+            linux::helper_installed(),
+            linux::helper_active(),
+            linux::SHARED_DIR,
+            linux::SCHEDULE_FILE,
+        )
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {
         WakeHelperStatus {
             installed: false,
@@ -190,7 +254,7 @@ fn get_wake_helper_status() -> WakeHelperStatus {
 
 /// Installiert den Wake Helper (erfordert Admin-Rechte)
 #[tauri::command]
-fn install_wake_helper(app: tauri::AppHandle) -> Result<String, String> {
+async fn install_wake_helper(app: tauri::AppHandle) -> Result<String, String> {
     #[cfg(target_os = "macos")]
     {
         use tauri::Manager;
@@ -235,15 +299,22 @@ fn install_wake_helper(app: tauri::AppHandle) -> Result<String, String> {
         }
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
     {
-        Err("Only supported on macOS".to_string())
+        let _ = app;
+        linux::install_helper()
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    {
+        let _ = app;
+        Err("Only supported on macOS and Linux".to_string())
     }
 }
 
 /// Deinstalliert den Wake Helper
 #[tauri::command]
-fn uninstall_wake_helper(app: tauri::AppHandle) -> Result<String, String> {
+async fn uninstall_wake_helper(app: tauri::AppHandle) -> Result<String, String> {
     #[cfg(target_os = "macos")]
     {
         use tauri::Manager;
@@ -284,9 +355,16 @@ fn uninstall_wake_helper(app: tauri::AppHandle) -> Result<String, String> {
         }
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
     {
-        Err("Only supported on macOS".to_string())
+        let _ = app;
+        linux::uninstall_helper()
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    {
+        let _ = app;
+        Err("Only supported on macOS and Linux".to_string())
     }
 }
 
@@ -340,15 +418,37 @@ fn update_wake_schedule(
         }
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
     {
-        Err("Only supported on macOS".to_string())
+        let message = match &next_wake {
+            Some(wake) => format!("Wake schedule updated: {}", wake),
+            None => "Wake schedule disabled".to_string(),
+        };
+        linux::write_schedule(&wake_schedule_json(next_wake, alarm_time, label)?)?;
+        Ok(message)
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    {
+        let _ = (next_wake, alarm_time, label);
+        Err("Only supported on macOS and Linux".to_string())
     }
 }
 
 /// Plant ein Systemaufwachen (Legacy-Funktion, nutzt jetzt den Helper-Mechanismus)
 #[tauri::command]
 fn schedule_wake(hour: u8, minute: u8) -> Result<String, String> {
+    #[cfg(target_os = "linux")]
+    {
+        let (iso_formatted, alarm_time) = next_wake_time(hour, minute)?;
+        linux::write_schedule(&wake_schedule_json(
+            Some(iso_formatted.clone()),
+            Some(alarm_time),
+            None,
+        )?)?;
+        Ok(format!("Wake scheduled for {}", iso_formatted))
+    }
+
     #[cfg(target_os = "macos")]
     {
         use chrono::{Duration, Local};
@@ -383,10 +483,36 @@ fn schedule_wake(hour: u8, minute: u8) -> Result<String, String> {
         Ok(format!("Wake scheduled for {}", iso_formatted))
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {
-        Err("Only supported on macOS".to_string())
+        let _ = (hour, minute);
+        Err("Only supported on macOS and Linux".to_string())
     }
+}
+
+/// Naechster Zeitpunkt `hour:minute` in lokaler Zeit (heute oder morgen).
+#[cfg(target_os = "linux")]
+fn next_wake_time(hour: u8, minute: u8) -> Result<(String, String), String> {
+    use chrono::{Duration, Local};
+
+    let now = Local::now();
+    let mut wake_time = now
+        .date_naive()
+        .and_hms_opt(hour as u32, minute as u32, 0)
+        .ok_or_else(|| format!("Invalid time {:02}:{:02}", hour, minute))?;
+
+    if wake_time
+        .and_local_timezone(Local)
+        .earliest()
+        .map_or(true, |t| t <= now)
+    {
+        wake_time += Duration::days(1);
+    }
+
+    Ok((
+        wake_time.format("%Y-%m-%dT%H:%M:%S").to_string(),
+        format!("{:02}:{:02}", hour, minute),
+    ))
 }
 
 /// Beschriftungen der macOS-Menueleiste.
@@ -459,6 +585,7 @@ fn menu_labels(language: &str) -> MenuLabels {
 
 /// Gleiche Regel wie `detectLanguage()` in `dist/i18n.js`: alles, was mit "de"
 /// beginnt, ist Deutsch, alles andere faellt auf Englisch zurueck.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn normalize_language(raw: &str) -> &'static str {
     if raw.trim().to_ascii_lowercase().starts_with("de") {
         "de"
@@ -470,6 +597,7 @@ fn normalize_language(raw: &str) -> &'static str {
 /// Liest die erste Sprache aus der Plist-Liste, die `defaults` ausgibt:
 /// `(\n    "de-DE",\n    "en-DE"\n)`. Die erste Zeile gewinnt, denn macOS
 /// sortiert die Liste nach Vorrang.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn parse_apple_languages(output: &str) -> Option<&'static str> {
     output.lines().find_map(|line| {
         let start = line.find('"')? + 1;
@@ -577,22 +705,18 @@ fn set_menu_language(app: tauri::AppHandle, language: String) -> Result<(), Stri
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .enable_macos_default_menu(false)
-        .menu(|app| {
-            #[cfg(target_os = "macos")]
-            {
-                build_macos_menu(app, system_language())
-            }
+    let builder = tauri::Builder::default().enable_macos_default_menu(false);
 
-            #[cfg(not(target_os = "macos"))]
-            {
-                tauri::menu::Menu::default(app)
-            }
-        })
+    // Unter Linux haengt GTK ein Menue als Leiste in das rahmenlose Fenster;
+    // dort gibt es deshalb keines.
+    #[cfg(target_os = "macos")]
+    let builder = builder.menu(|app| build_macos_menu(app, system_language()));
+
+    builder
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             prevent_sleep,
+            allow_sleep,
             schedule_wake,
             check_sleep_permission,
             wake_screen,

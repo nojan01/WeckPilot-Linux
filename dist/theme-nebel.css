@@ -1,0 +1,231 @@
+/*
+ * Nebel-Theme fuer Linux.
+ *
+ * Angelehnt an das Linux-Mint-Nebel-Wallpaper, Mint-L-Dark-Grey und das
+ * Plank-Theme "Nebel-Grau": halbtransparente Grautoene mit hellem Rand,
+ * Ziffern im leuchtenden Gruen des Mint-Logos.
+ * Greift nur, wenn platform.js <html> die Klasse "platform-linux" gibt.
+ */
+
+html.platform-linux {
+    --nebel-darkest: #292929;
+    --nebel-dark: #2f2f2f;
+    --nebel-bg: #383838;
+    --nebel-base: #404040;
+    --nebel-mid: #5b5a5b;
+    --nebel-fog: #818a82;
+    --nebel-fog-light: #a8a8a5;
+    --nebel-border: rgba(150, 150, 150, 0.55);
+    --nebel-border-soft: rgba(150, 150, 150, 0.25);
+    --mint: #6db442;
+    --mint-strong: #5f9e3c;
+    --mint-hover: #538a34;
+    --mint-glow: #6fcf4c;
+    --nebel-red: #f04a50;
+    --nebel-orange: #f27835;
+
+    --bg-dark: var(--nebel-bg);
+    --bg-darker: var(--nebel-darkest);
+    --clock-bg: #1f2a1b;
+    --clock-bg-gradient: linear-gradient(180deg, rgba(60, 60, 60, 0.97) 0%, rgba(35, 35, 35, 0.95) 100%);
+    --wood-light: var(--nebel-fog-light);
+    --wood-dark: var(--nebel-mid);
+    --wood-grain: var(--nebel-fog);
+    --digit-color: #a6e48a;
+    --digit-glow: var(--mint-glow);
+    --digit-dim: #2c3a28;
+    --text-light: #dadada;
+    --text-dim: #8f8f8f;
+    --accent-blue: var(--mint-strong);
+    --accent-green: var(--mint);
+    --button-bg: var(--nebel-base);
+    --button-hover: #4a4a4a;
+
+    /* Native Bedienelemente (Scrollbars, Zeitwahl) passend dunkel */
+    color-scheme: dark;
+}
+
+/* Seitenteile: Nebelgrau statt Holz */
+html.platform-linux .wood-frame {
+    box-shadow: inset 0 0 0 1px var(--nebel-border-soft);
+}
+
+html.platform-linux .clock-body {
+    border: 1px solid var(--nebel-border);
+}
+
+html.platform-linux .title-bar {
+    background: linear-gradient(180deg, rgba(74, 74, 74, 0.95) 0%, rgba(56, 56, 56, 0.95) 100%);
+    border-bottom: 1px solid var(--nebel-border-soft);
+}
+
+html.platform-linux .title-bar .title {
+    color: #ededed;
+}
+
+html.platform-linux .digit {
+    text-shadow:
+        0 0 20px var(--digit-glow),
+        0 0 40px var(--digit-glow),
+        0 0 60px rgba(111, 207, 76, 0.3);
+}
+
+html.platform-linux .ampm-indicator span.active {
+    background: rgba(109, 180, 66, 0.15);
+}
+
+html.platform-linux .status-bar {
+    border-top: 1px solid var(--nebel-border-soft);
+}
+
+html.platform-linux #next-alarm-text {
+    color: var(--digit-color);
+    background: rgba(109, 180, 66, 0.15);
+}
+
+html.platform-linux #next-alarm-text.alarm-set {
+    color: var(--nebel-darkest);
+}
+
+html.platform-linux .format-button,
+html.platform-linux .settings-button,
+html.platform-linux .quit-button {
+    color: #b5b5b5;
+    border-color: var(--nebel-border-soft);
+}
+
+html.platform-linux .settings-button:hover {
+    color: #ffffff;
+}
+
+html.platform-linux .format-button.active-12h {
+    background: rgba(109, 180, 66, 0.2);
+    border-color: var(--digit-color);
+    color: var(--digit-color);
+}
+
+html.platform-linux .quit-button:hover {
+    background: rgba(240, 74, 80, 0.2);
+    border-color: rgba(240, 74, 80, 0.6);
+    color: var(--nebel-red);
+}
+
+html.platform-linux .sleep-button {
+    background: linear-gradient(180deg, #6a6a6a 0%, #4a4a4a 100%);
+    border: 1px solid var(--nebel-border);
+}
+
+html.platform-linux .sleep-button:hover {
+    background: linear-gradient(180deg, #7a7a7a 0%, #5a5a5a 100%);
+}
+
+/* Einstellungen */
+html.platform-linux .settings-panel {
+    background: rgba(56, 56, 56, 0.97);
+    border: 1px solid var(--nebel-border);
+}
+
+html.platform-linux .toggle-switch .slider,
+html.platform-linux .toggle-slider {
+    background: var(--nebel-mid);
+}
+
+html.platform-linux .toggle-switch input:checked + .slider,
+html.platform-linux .toggle-switch input:checked + .toggle-slider {
+    background: var(--mint);
+}
+
+html.platform-linux .sleep-mode-options {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+html.platform-linux .language-control select {
+    background-color: rgba(41, 41, 41, 0.8);
+    border-color: var(--nebel-border-soft);
+}
+
+html.platform-linux .btn-add-alarm:hover,
+html.platform-linux .btn-save:hover {
+    background: var(--mint-hover);
+}
+
+html.platform-linux .alarm-item {
+    background: rgba(41, 41, 41, 0.7);
+}
+
+html.platform-linux .alarm-item:hover {
+    border-color: var(--mint);
+    background: rgba(64, 64, 64, 0.9);
+}
+
+/* Dialog */
+html.platform-linux .modal-content {
+    background: linear-gradient(180deg, var(--nebel-base) 0%, var(--nebel-dark) 100%);
+    border: 1px solid var(--nebel-border);
+}
+
+html.platform-linux .weekday-checkbox input:checked + span {
+    color: #ffffff;
+}
+
+html.platform-linux .badge-once {
+    background: rgba(242, 120, 53, 0.25);
+    color: var(--nebel-orange);
+}
+
+html.platform-linux .btn-delete {
+    border-color: var(--nebel-red);
+    color: var(--nebel-red);
+}
+
+html.platform-linux .btn-delete:hover {
+    background: var(--nebel-red);
+    color: #ffffff;
+}
+
+/* Klingeln */
+html.platform-linux .btn-snooze {
+    background: linear-gradient(180deg, var(--nebel-orange) 0%, #d9662a 100%);
+}
+
+html.platform-linux .btn-dismiss {
+    background: linear-gradient(180deg, var(--mint) 0%, var(--mint-strong) 100%);
+}
+
+/* Wake-Helper */
+html.platform-linux .wake-helper-section {
+    border-color: var(--nebel-border-soft);
+}
+
+html.platform-linux .wake-helper-title {
+    color: var(--text-light);
+}
+
+html.platform-linux .wake-helper-title svg {
+    color: var(--digit-color);
+}
+
+html.platform-linux .status-dot.active {
+    background: var(--mint);
+    box-shadow: 0 0 6px rgba(109, 180, 66, 0.5);
+}
+
+html.platform-linux .btn-helper-install {
+    background: rgba(109, 180, 66, 0.2);
+    color: var(--digit-color);
+    border: 1px solid rgba(109, 180, 66, 0.4);
+}
+
+html.platform-linux .btn-helper-install:hover {
+    background: rgba(109, 180, 66, 0.3);
+}
+
+html.platform-linux .btn-helper-uninstall {
+    background: rgba(240, 74, 80, 0.15);
+    color: var(--nebel-red);
+    border: 1px solid rgba(240, 74, 80, 0.3);
+}
+
+html.platform-linux .btn-helper-uninstall:hover {
+    background: rgba(240, 74, 80, 0.25);
+}

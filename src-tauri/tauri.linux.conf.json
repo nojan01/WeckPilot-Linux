@@ -1,0 +1,21 @@
+{
+  "mainBinaryName": "weckpilot",
+  "bundle": {
+    "linux": {
+      "deb": {
+        "depends": [
+          "systemd",
+          "util-linux",
+          "pkexec | policykit-1"
+        ]
+      },
+      "rpm": {
+        "depends": [
+          "systemd",
+          "util-linux",
+          "polkit"
+        ]
+      }
+    }
+  }
+}

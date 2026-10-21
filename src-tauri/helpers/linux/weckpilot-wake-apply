@@ -1,0 +1,97 @@
+#!/bin/bash
+#
+# WeckPilot Wake Helper (Linux)
+#
+# Reads the next alarm from schedule.json and programs the RTC wake alarm via
+# rtcwake so the computer resumes from suspend shortly before the alarm rings.
+# Triggered by systemd whenever the schedule changes and before every suspend.
+#
+# Environment overrides exist only for tests:
+#   WECKPILOT_SHARED_DIR  directory containing schedule.json and helper.log
+#   WECKPILOT_RTCWAKE     rtcwake command to call
+#   WECKPILOT_NOW         current time as Unix timestamp
+
+set -u
+
+SHARED_DIR="${WECKPILOT_SHARED_DIR:-/var/lib/weckpilot}"
+SCHEDULE_FILE="$SHARED_DIR/schedule.json"
+LOG_FILE="$SHARED_DIR/helper.log"
+RTCWAKE="${WECKPILOT_RTCWAKE:-rtcwake}"
+NOW="${WECKPILOT_NOW:-$(date +%s)}"
+EARLY_SECONDS=60
+MIN_LEAD_SECONDS=15
+MAX_LOG_LINES=500
+
+log() {
+    # The schedule file belongs to the user; the log stays root-owned and is
+    # never followed if it was replaced by a symlink.
+    [ -L "$LOG_FILE" ] && rm -f "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG_FILE"
+}
+
+trim_log() {
+    [ -f "$LOG_FILE" ] || return 0
+    local lines
+    lines=$(wc -l < "$LOG_FILE")
+    if [ "$lines" -gt "$MAX_LOG_LINES" ]; then
+        tail -n "$MAX_LOG_LINES" "$LOG_FILE" > "$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
+    fi
+}
+
+clear_alarm() {
+    if "$RTCWAKE" -m disable >/dev/null 2>&1; then
+        log "RTC wake alarm cleared"
+    fi
+}
+
+trim_log
+log "WeckPilot wake helper started"
+
+if [ ! -f "$SCHEDULE_FILE" ] || [ -L "$SCHEDULE_FILE" ]; then
+    log "No schedule file found at $SCHEDULE_FILE"
+    clear_alarm
+    exit 0
+fi
+
+# Only values matching these strict patterns are used, the rest of the
+# user-writable file is ignored.
+CONTENT=$(head -c 4096 "$SCHEDULE_FILE")
+ENABLED=$(printf '%s' "$CONTENT" | grep -oE '"enabled"[[:space:]]*:[[:space:]]*(true|false)' | grep -oE 'true|false' | head -n 1)
+NEXT_WAKE=$(printf '%s' "$CONTENT" | grep -oE '"nextWake"[[:space:]]*:[[:space:]]*"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"' | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}' | head -n 1)
+
+if [ "$ENABLED" != "true" ]; then
+    log "Schedule is disabled"
+    clear_alarm
+    exit 0
+fi
+
+if [ -z "$NEXT_WAKE" ]; then
+    log "No valid next wake time in schedule"
+    clear_alarm
+    exit 0
+fi
+
+if ! WAKE_EPOCH=$(date -d "$NEXT_WAKE" +%s 2>/dev/null); then
+    log "Invalid datetime format: $NEXT_WAKE"
+    clear_alarm
+    exit 0
+fi
+
+if [ "$WAKE_EPOCH" -le "$NOW" ]; then
+    log "Wake time is in the past: $NEXT_WAKE"
+    clear_alarm
+    exit 0
+fi
+
+# Wake one minute early so the desktop is ready when the alarm rings.
+EARLY_EPOCH=$((WAKE_EPOCH - EARLY_SECONDS))
+if [ "$EARLY_EPOCH" -lt $((NOW + MIN_LEAD_SECONDS)) ]; then
+    EARLY_EPOCH=$((NOW + MIN_LEAD_SECONDS))
+fi
+
+if OUTPUT=$("$RTCWAKE" -m no -t "$EARLY_EPOCH" 2>&1); then
+    log "Scheduled RTC wake for $(date -d "@$EARLY_EPOCH" '+%Y-%m-%d %H:%M:%S') (alarm $NEXT_WAKE)"
+else
+    log "rtcwake failed: $OUTPUT"
+    exit 1
+fi

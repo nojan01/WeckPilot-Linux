@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch the WeckPilot wake schedule
+
+[Path]
+PathChanged=/var/lib/weckpilot/schedule.json
+Unit=weckpilot-wake.service
+
+[Install]
+WantedBy=paths.target

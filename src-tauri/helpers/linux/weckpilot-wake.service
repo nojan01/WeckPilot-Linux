@@ -1,0 +1,10 @@
+[Unit]
+Description=WeckPilot wake helper (programs the RTC wake alarm)
+Before=sleep.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/weckpilot/weckpilot-wake-apply
+
+[Install]
+WantedBy=sleep.target multi-user.target

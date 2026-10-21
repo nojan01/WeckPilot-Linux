@@ -845,6 +845,8 @@ if (preventSleepToggle) {
         
         if (preventSleepEnabled) {
             activatePreventSleep();
+        } else if (tauriInvoke) {
+            tauriInvoke('allow_sleep').catch(err => console.error('allow_sleep error:', err));
         }
         updatePowerStatus();
     });
