@@ -4,7 +4,9 @@
  * Angelehnt an das Linux-Mint-Nebel-Wallpaper, Mint-L-Dark-Grey und das
  * Plank-Theme "Nebel-Grau": halbtransparente Grautoene mit hellem Rand,
  * Ziffern im leuchtenden Gruen des Mint-Logos.
- * Greift ueber die Klasse "nebel" am <html>-Element.
+ * Greift ueber die Klasse "nebel" am <html>-Element. Die Farbvarianten
+ * (Klasse "variant-...") tauschen nur Flaechen und Rahmen, die Ziffern
+ * leuchten immer gruen.
  */
 
 html.nebel {
@@ -41,6 +43,19 @@ html.nebel {
     --button-bg: var(--nebel-base);
     --button-hover: #4a4a4a;
 
+    /* Flaechen, die die Farbvarianten austauschen */
+    --title-bar-bg: linear-gradient(180deg, rgba(74, 74, 74, 0.95) 0%, rgba(56, 56, 56, 0.95) 100%);
+    --title-color: #ededed;
+    --panel-bg: rgba(56, 56, 56, 0.97);
+    --modal-bg: linear-gradient(180deg, var(--nebel-base) 0%, var(--nebel-dark) 100%);
+    --pill-bg: #4a4a4a;
+    --item-bg: rgba(41, 41, 41, 0.7);
+    --item-hover-bg: rgba(64, 64, 64, 0.9);
+    --select-bg: rgba(41, 41, 41, 0.8);
+    --control-color: #b5b5b5;
+    --sleep-button-bg: linear-gradient(180deg, #6a6a6a 0%, #4a4a4a 100%);
+    --sleep-button-hover-bg: linear-gradient(180deg, #7a7a7a 0%, #5a5a5a 100%);
+
     /* Native Bedienelemente (Scrollbars, Zeitwahl) passend dunkel */
     color-scheme: dark;
 }
@@ -55,12 +70,12 @@ html.nebel .clock-body {
 }
 
 html.nebel .title-bar {
-    background: linear-gradient(180deg, rgba(74, 74, 74, 0.95) 0%, rgba(56, 56, 56, 0.95) 100%);
+    background: var(--title-bar-bg);
     border-bottom: 1px solid var(--nebel-border-soft);
 }
 
 html.nebel .title-bar .title {
-    color: #ededed;
+    color: var(--title-color);
 }
 
 html.nebel .digit {
@@ -85,14 +100,14 @@ html.nebel #next-alarm-text {
 
 html.nebel #next-alarm-text.alarm-set {
     color: var(--digit-color);
-    background: #4a4a4a;
+    background: var(--pill-bg);
     text-shadow: 0 0 6px var(--digit-glow);
 }
 
 html.nebel .format-button,
 html.nebel .settings-button,
 html.nebel .quit-button {
-    color: #b5b5b5;
+    color: var(--control-color);
     border-color: var(--nebel-border-soft);
 }
 
@@ -113,17 +128,17 @@ html.nebel .quit-button:hover {
 }
 
 html.nebel .sleep-button {
-    background: linear-gradient(180deg, #6a6a6a 0%, #4a4a4a 100%);
+    background: var(--sleep-button-bg);
     border: 1px solid var(--nebel-border);
 }
 
 html.nebel .sleep-button:hover {
-    background: linear-gradient(180deg, #7a7a7a 0%, #5a5a5a 100%);
+    background: var(--sleep-button-hover-bg);
 }
 
 /* Einstellungen */
 html.nebel .settings-panel {
-    background: rgba(56, 56, 56, 0.97);
+    background: var(--panel-bg);
     border: 1px solid var(--nebel-border);
 }
 
@@ -142,7 +157,7 @@ html.nebel .sleep-mode-options {
 }
 
 html.nebel .language-control select {
-    background-color: rgba(41, 41, 41, 0.8);
+    background-color: var(--select-bg);
     border-color: var(--nebel-border-soft);
 }
 
@@ -152,17 +167,17 @@ html.nebel .btn-save:hover {
 }
 
 html.nebel .alarm-item {
-    background: rgba(41, 41, 41, 0.7);
+    background: var(--item-bg);
 }
 
 html.nebel .alarm-item:hover {
     border-color: var(--mint);
-    background: rgba(64, 64, 64, 0.9);
+    background: var(--item-hover-bg);
 }
 
 /* Dialog */
 html.nebel .modal-content {
-    background: linear-gradient(180deg, var(--nebel-base) 0%, var(--nebel-dark) 100%);
+    background: var(--modal-bg);
     border: 1px solid var(--nebel-border);
 }
 
@@ -246,4 +261,99 @@ html.nebel .btn-helper-uninstall {
 
 html.nebel .btn-helper-uninstall:hover {
     background: rgba(240, 74, 80, 0.25);
+}
+
+/* ==================== FARBVARIANTEN ==================== */
+
+/* Graphit: fast schwarzes Gehaeuse, dunkle Metallrahmen */
+html.nebel.variant-graphit {
+    --clock-bg-gradient: linear-gradient(180deg, rgba(30, 30, 32, 0.98) 0%, rgba(14, 14, 16, 0.97) 100%);
+    --wood-light: #5a5c60;
+    --wood-dark: #222326;
+    --wood-grain: #3a3c40;
+    --nebel-border: rgba(110, 110, 115, 0.5);
+    --nebel-border-soft: rgba(110, 110, 115, 0.22);
+    --title-bar-bg: linear-gradient(180deg, rgba(42, 42, 45, 0.97) 0%, rgba(26, 26, 28, 0.97) 100%);
+    --panel-bg: rgba(28, 28, 30, 0.97);
+    --modal-bg: linear-gradient(180deg, #2a2a2d 0%, #18181a 100%);
+    --pill-bg: #2c2c2f;
+    --item-bg: rgba(14, 14, 16, 0.7);
+    --item-hover-bg: rgba(40, 40, 44, 0.9);
+    --select-bg: rgba(14, 14, 16, 0.8);
+    --button-bg: #2c2c2f;
+    --button-hover: #38383c;
+    --sleep-button-bg: linear-gradient(180deg, #48484c 0%, #2c2c2f 100%);
+    --sleep-button-hover-bg: linear-gradient(180deg, #58585c 0%, #3a3a3e 100%);
+}
+
+/* Holz: Nussbaum-Seitenteile, warm-dunkles Gehaeuse */
+html.nebel.variant-holz {
+    --clock-bg-gradient: linear-gradient(180deg, rgba(48, 40, 34, 0.98) 0%, rgba(28, 23, 19, 0.97) 100%);
+    --wood-light: #b08356;
+    --wood-dark: #5c3a1e;
+    --wood-grain: #8a5d34;
+    --nebel-border: rgba(160, 125, 90, 0.5);
+    --nebel-border-soft: rgba(160, 125, 90, 0.22);
+    --title-bar-bg: linear-gradient(180deg, rgba(70, 56, 45, 0.97) 0%, rgba(50, 40, 32, 0.97) 100%);
+    --title-color: #f0e6da;
+    --panel-bg: rgba(48, 40, 34, 0.97);
+    --modal-bg: linear-gradient(180deg, #45382e 0%, #2c241e 100%);
+    --pill-bg: #4a3d32;
+    --item-bg: rgba(30, 24, 20, 0.7);
+    --item-hover-bg: rgba(62, 50, 41, 0.9);
+    --select-bg: rgba(30, 24, 20, 0.8);
+    --button-bg: #45382e;
+    --button-hover: #554539;
+    --text-dim: #a08f80;
+    --control-color: #c9b8a6;
+    --sleep-button-bg: linear-gradient(180deg, #7a5a3e 0%, #5a4029 100%);
+    --sleep-button-hover-bg: linear-gradient(180deg, #8a6a4c 0%, #6a4c33 100%);
+}
+
+/* Silber: helle Aluminium-Seitenteile, schiefergraues Gehaeuse */
+html.nebel.variant-silber {
+    --clock-bg-gradient: linear-gradient(180deg, rgba(72, 76, 80, 0.97) 0%, rgba(44, 47, 50, 0.96) 100%);
+    --wood-light: #f0f1f2;
+    --wood-dark: #a9adb1;
+    --wood-grain: #d2d5d8;
+    --nebel-border: rgba(200, 204, 208, 0.6);
+    --nebel-border-soft: rgba(200, 204, 208, 0.28);
+    --title-bar-bg: linear-gradient(180deg, rgba(150, 155, 160, 0.97) 0%, rgba(112, 117, 122, 0.97) 100%);
+    --title-color: #ffffff;
+    --panel-bg: rgba(64, 68, 72, 0.97);
+    --modal-bg: linear-gradient(180deg, #555a5f 0%, #3c4044 100%);
+    --pill-bg: #565b60;
+    --item-bg: rgba(40, 43, 46, 0.7);
+    --item-hover-bg: rgba(80, 85, 90, 0.9);
+    --select-bg: rgba(40, 43, 46, 0.8);
+    --button-bg: #565b60;
+    --button-hover: #62676c;
+    --text-dim: #a2a8ad;
+    --control-color: #d0d4d8;
+    --sleep-button-bg: linear-gradient(180deg, #9aa0a5 0%, #6e7378 100%);
+    --sleep-button-hover-bg: linear-gradient(180deg, #aab0b5 0%, #7e8388 100%);
+}
+
+/* Petrol: dunkles Blaugruen, Stahlrahmen */
+html.nebel.variant-petrol {
+    --clock-bg-gradient: linear-gradient(180deg, rgba(22, 52, 58, 0.98) 0%, rgba(10, 30, 35, 0.97) 100%);
+    --wood-light: #8fa3a8;
+    --wood-dark: #3b5257;
+    --wood-grain: #63797e;
+    --nebel-border: rgba(110, 160, 165, 0.5);
+    --nebel-border-soft: rgba(110, 160, 165, 0.22);
+    --title-bar-bg: linear-gradient(180deg, rgba(34, 70, 77, 0.97) 0%, rgba(22, 50, 56, 0.97) 100%);
+    --title-color: #e2f2f3;
+    --panel-bg: rgba(20, 46, 52, 0.97);
+    --modal-bg: linear-gradient(180deg, #1f474f 0%, #12303a 100%);
+    --pill-bg: #234a52;
+    --item-bg: rgba(8, 26, 30, 0.7);
+    --item-hover-bg: rgba(30, 64, 71, 0.9);
+    --select-bg: rgba(8, 26, 30, 0.8);
+    --button-bg: #234a52;
+    --button-hover: #2c5760;
+    --text-dim: #85a5aa;
+    --control-color: #b9d3d6;
+    --sleep-button-bg: linear-gradient(180deg, #4e7a82 0%, #2f565e 100%);
+    --sleep-button-hover-bg: linear-gradient(180deg, #5e8a92 0%, #3f666e 100%);
 }

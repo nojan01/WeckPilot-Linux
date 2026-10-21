@@ -1,6 +1,6 @@
 [package]
 name = "weckpilot"
-version = "1.0.1"
+version = "1.0.2"
 description = "A modern alarm clock with weekly schedules for Linux"
 authors = ["Norbert Jander"]
 license = "MIT"

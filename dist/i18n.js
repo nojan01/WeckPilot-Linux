@@ -9,6 +9,8 @@ const I18n = (() => {
         en: {
             language: 'Language',
             size: '🔍 Window size',
+            colorScheme: '🎨 Color scheme',
+            variantNebel: 'Fog', variantGraphit: 'Graphite', variantHolz: 'Wood', variantSilber: 'Silver', variantPetrol: 'Petrol',
             settings: 'Settings',
             quit: 'Quit WeckPilot',
             toggleTimeFormat: 'Toggle 12/24-hour format',
@@ -72,6 +74,8 @@ const I18n = (() => {
         de: {
             language: 'Sprache',
             size: '🔍 Fenstergröße',
+            colorScheme: '🎨 Farbgebung',
+            variantNebel: 'Nebel', variantGraphit: 'Graphit', variantHolz: 'Holz', variantSilber: 'Silber', variantPetrol: 'Petrol',
             settings: 'Einstellungen',
             quit: 'WeckPilot beenden',
             toggleTimeFormat: 'Zwischen 12- und 24-Stunden-Format wechseln',

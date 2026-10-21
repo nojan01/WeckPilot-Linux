@@ -1056,6 +1056,30 @@ async function applyUiScale(scale) {
     }
 }
 
+// ==================== FARBGEBUNG ====================
+const VARIANT_KEY = 'weckpilot-variant';
+const VARIANTS = ['nebel', 'graphit', 'holz', 'silber', 'petrol'];
+
+function applyVariant(variant) {
+    const root = document.documentElement;
+    VARIANTS.forEach(name => root.classList.remove(`variant-${name}`));
+    if (variant !== 'nebel') root.classList.add(`variant-${variant}`);
+}
+
+function initVariant() {
+    const select = document.getElementById('variant-select');
+    const saved = localStorage.getItem(VARIANT_KEY);
+    const variant = VARIANTS.includes(saved) ? saved : 'nebel';
+    applyVariant(variant);
+    if (!select) return;
+    select.value = variant;
+    select.addEventListener('change', () => {
+        if (!VARIANTS.includes(select.value)) return;
+        localStorage.setItem(VARIANT_KEY, select.value);
+        applyVariant(select.value);
+    });
+}
+
 function initUiScale() {
     const select = document.getElementById('scale-select');
     const scale = savedUiScale();
@@ -1128,6 +1152,7 @@ function init() {
     // Wake Helper initialisieren
     initWakeHelper();
     initUiScale();
+    initVariant();
     
     // Caffeinate alle 10 Stunden erneuern (wenn aktiviert)
     setInterval(() => {

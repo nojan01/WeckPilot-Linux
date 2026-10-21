@@ -6,6 +6,15 @@
     <title>WeckPilot</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="theme-nebel.css">
+    <script>
+        // Farbvariante vor dem ersten Zeichnen setzen, damit nichts aufblitzt.
+        (function () {
+            const variant = localStorage.getItem('weckpilot-variant');
+            if (['graphit', 'holz', 'silber', 'petrol'].includes(variant)) {
+                document.documentElement.classList.add('variant-' + variant);
+            }
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
@@ -107,6 +116,22 @@
                 </div>
             </div>
             
+            <!-- Farbgebung -->
+            <div class="sleep-mode-section size-section">
+                <div class="sleep-mode-header">
+                    <h4 data-i18n="colorScheme">Color scheme</h4>
+                    <label class="language-control" for="variant-select">
+                        <select id="variant-select" aria-label="Color scheme">
+                            <option value="nebel" data-i18n="variantNebel">Fog</option>
+                            <option value="graphit" data-i18n="variantGraphit">Graphite</option>
+                            <option value="holz" data-i18n="variantHolz">Wood</option>
+                            <option value="silber" data-i18n="variantSilber">Silver</option>
+                            <option value="petrol" data-i18n="variantPetrol">Petrol</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
             <!-- Fenstergroesse -->
             <div class="sleep-mode-section size-section">
                 <div class="sleep-mode-header">
