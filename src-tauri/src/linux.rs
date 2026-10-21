@@ -28,19 +28,19 @@ const INHIBIT_REASON: &str = "An alarm is active";
 /// ein FUSE-gemountetes AppImage nicht hineinsehen, deshalb werden sie vor
 /// der Installation in ein temporaeres Verzeichnis geschrieben.
 const HELPER_FILES: [(&str, &str); 5] = [
-    ("install.sh", include_str!("../helpers/linux/install.sh")),
-    ("uninstall.sh", include_str!("../helpers/linux/uninstall.sh")),
+    ("install.sh", include_str!("../helpers/install.sh")),
+    ("uninstall.sh", include_str!("../helpers/uninstall.sh")),
     (
         "weckpilot-wake-apply",
-        include_str!("../helpers/linux/weckpilot-wake-apply"),
+        include_str!("../helpers/weckpilot-wake-apply"),
     ),
     (
         "weckpilot-wake.service",
-        include_str!("../helpers/linux/weckpilot-wake.service"),
+        include_str!("../helpers/weckpilot-wake.service"),
     ),
     (
         "weckpilot-wake.path",
-        include_str!("../helpers/linux/weckpilot-wake.path"),
+        include_str!("../helpers/weckpilot-wake.path"),
     ),
 ];
 

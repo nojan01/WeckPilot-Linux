@@ -1,8 +1,12 @@
-# WeckPilot
+# WeckPilot für Linux
 
-WeckPilot ist eine moderne, native Wecker-Anwendung für macOS und Linux. Mehrere
-Weckzeiten, Wochenpläne und eine sanft ansteigende Lautstärke lassen sich in
-einer kompakten Oberfläche verwalten.
+WeckPilot ist eine moderne Wecker-Anwendung für Linux. Mehrere Weckzeiten,
+Wochenpläne und eine sanft ansteigende Lautstärke lassen sich in einer
+kompakten Oberfläche verwalten. Die Farbgebung folgt dem Nebel-Thema: neblige
+Grautöne mit grün leuchtenden Ziffern im Stil des Linux-Mint-Logos.
+
+Die macOS-Version wird getrennt im Repository
+[nojan01/WeckPilot](https://github.com/nojan01/WeckPilot) gepflegt.
 
 ## Funktionen
 
@@ -12,25 +16,24 @@ einer kompakten Oberfläche verwalten.
 - lokale Speicherung der Einstellungen
 - deutsche und englische Oberfläche mit automatischer Systemspracherkennung
   und manueller Sprachwahl
-- optionaler Wake-Helper, der den Rechner für einen Alarm aufwecken kann
-- native, signierte und von Apple notarisierte macOS-App
-- Linux-Version mit eigener Farbgebung im Stil des Nebel-Themas
+- Energieverwaltung, die den Ruhezustand verhindert, solange ein Wecker aktiv ist
+- optionaler Wake-Helper, der den Rechner für einen Alarm aus dem Ruhezustand
+  aufweckt
 
-## Download
+## Installation
 
-Die aktuelle signierte Version steht unter
-[Releases](https://github.com/nojan01/WeckPilot/releases/latest) als DMG bereit.
+WeckPilot wird als `.deb`-Paket, AppImage und `.rpm` gebaut. Unter Debian,
+Ubuntu und Linux Mint:
 
-Voraussetzung ist ein Mac mit Apple Silicon. Für den optionalen Wake-Helper
-werden Administratorrechte und die Xcode Command Line Tools benötigt, weil der
-mitgelieferte Swift-Quelltext lokal kompiliert und als LaunchDaemon installiert
-wird.
+```bash
+sudo apt install ./WeckPilot_1.0.0_amd64.deb
+```
 
-### Linux
+Benötigt werden WebKitGTK 4.1, systemd, `rtcwake` (util-linux) und `pkexec`
+(polkit). Das Debian-Paket zieht diese Abhängigkeiten automatisch nach.
+Getestet wurde unter Linux Mint 22 mit Cinnamon.
 
-Unter Linux (getestet mit Linux Mint 22 / Cinnamon) erstellt WeckPilot eigene
-Pakete im Format `.deb` und AppImage. Für die Laufzeit werden WebKitGTK 4.1,
-systemd, `rtcwake` (util-linux) und `pkexec` (polkit) benötigt.
+## Energieverwaltung und Wake-Helper
 
 - **Energieverwaltung:** Solange die Option aktiv ist, blockiert WeckPilot den
   Ruhezustand über logind und den Bildschirmschoner über
@@ -44,14 +47,11 @@ systemd, `rtcwake` (util-linux) und `pkexec` (polkit) benötigt.
   des Weckplans in `/var/lib/weckpilot/schedule.json` und vor jedem Ruhezustand
   stellt das Skript mit `rtcwake` die RTC-Weckzeit eine Minute vor dem Alarm.
   Das Mainboard muss das Aufwachen per RTC unterstützen.
-- **Farbgebung:** Unter Linux nutzt die Oberfläche das Nebel-Thema
-  (`dist/theme-nebel.css`): neblige Grautöne mit grünem Mint-Leuchten. Unter
-  macOS bleibt das bisherige Aussehen unverändert.
 
 ## Entwicklung
 
-Benötigt werden Node.js, Rust und die Tauri-Voraussetzungen für macOS bzw.
-Linux. Unter Debian, Ubuntu und Linux Mint sind das:
+Benötigt werden Node.js, Rust und die Tauri-Voraussetzungen für Linux. Unter
+Debian, Ubuntu und Linux Mint:
 
 ```bash
 sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev \
@@ -63,28 +63,24 @@ npm ci
 npm run tauri:dev
 ```
 
-Einen Release-Build erstellt:
+Pakete (`.deb`, AppImage, `.rpm`) erstellt:
 
 ```bash
 npm run tauri:build
 ```
 
-Unter Linux erzeugt `npm run tauri:build:linux` die Pakete `.deb` und AppImage.
-Die Tests für das Root-Skript des Linux-Wake-Helpers laufen mit:
+Sie liegen danach unter `src-tauri/target/release/bundle/`.
+
+Tests:
 
 ```bash
-bash src-tauri/helpers/linux/test-wake-apply.sh
+cd src-tauri && cargo test                      # Unit-Tests
+cd src-tauri && cargo test -- --include-ignored # zusätzlich D-Bus, braucht Desktop-Sitzung
+bash src-tauri/helpers/test-wake-apply.sh       # Root-Skript des Wake-Helpers
 ```
 
-Der vollständige signierte und notarisierte Release-Prozess verwendet die im
-macOS-Schlüsselbund hinterlegte Developer-ID und das Notarisierungsprofil
-`DesktopProfileManager`:
-
-```bash
-./release-macos.sh
-```
-
-Die Web-Oberfläche liegt in `dist/`, der native Tauri-Code in `src-tauri/`.
+Die Web-Oberfläche liegt in `dist/` (Farbgebung in `dist/theme-nebel.css`),
+der native Tauri-Code in `src-tauri/`, der Wake-Helper in `src-tauri/helpers/`.
 
 ## Datenschutz
 
@@ -99,7 +95,3 @@ Copyright © 2026 Norbert Jander
 WeckPilot ist unter der [MIT-Lizenz](LICENSE) veröffentlicht. Hinweise zu den
 verwendeten Open-Source-Komponenten stehen in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-Die interne Bundle-ID bleibt für die Update-Kompatibilität mit bereits
-installierten Versionen unverändert. Bestehende Alarme und ein vorhandener
-Wake-Helper werden von WeckPilot weiterverwendet.

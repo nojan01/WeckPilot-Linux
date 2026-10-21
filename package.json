@@ -1,22 +1,27 @@
 {
-  "name": "weckpilot",
-  "version": "1.1.8",
-  "description": "A modern alarm clock with flexible alarms, weekly schedules, and English/German interface languages.",
+  "name": "weckpilot-linux",
+  "version": "1.0.0",
+  "description": "A modern alarm clock for Linux with flexible alarms, weekly schedules, and English/German interface languages.",
   "main": "index.html",
   "scripts": {
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
-    "tauri:build:linux": "tauri build --bundles deb,appimage"
+    "tauri:build": "tauri build"
   },
-  "keywords": ["alarm", "clock", "timer", "tauri"],
+  "keywords": [
+    "alarm",
+    "clock",
+    "timer",
+    "tauri",
+    "linux"
+  ],
   "author": "Norbert Jander",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nojan01/WeckPilot.git"
+    "url": "https://github.com/nojan01/WeckPilot-Linux.git"
   },
-  "homepage": "https://github.com/nojan01/WeckPilot",
+  "homepage": "https://github.com/nojan01/WeckPilot-Linux",
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.0"
   }

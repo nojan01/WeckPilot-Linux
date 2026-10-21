@@ -20,11 +20,11 @@ const I18n = (() => {
             autoStart: 'Auto-start at',
             autoEnd: 'Auto-end at',
             powerManagement: '⚡ Power Management',
-            powerInactive: 'Prevents your Mac from sleeping while an alarm is active',
-            powerActive: '✓ Mac sleep is being prevented',
+            powerInactive: 'Prevents your computer from sleeping while an alarm is active',
+            powerActive: '✓ Computer sleep is being prevented',
             wakeFromSleep: 'Wake from Sleep',
             checking: 'Checking…',
-            wakeHelperDescription: 'Installs a system helper that wakes your Mac from sleep before an alarm rings.',
+            wakeHelperDescription: 'Installs a system service that wakes your computer from suspend before an alarm rings.',
             installHelper: 'Install Helper',
             uninstallHelper: 'Uninstall Helper',
             installing: 'Installing…',
@@ -82,11 +82,11 @@ const I18n = (() => {
             autoStart: 'Automatisch ab',
             autoEnd: 'Automatisch bis',
             powerManagement: '⚡ Energieverwaltung',
-            powerInactive: 'Verhindert den Mac-Ruhezustand, solange ein Wecker aktiv ist',
-            powerActive: '✓ Mac-Ruhezustand wird verhindert',
+            powerInactive: 'Verhindert den Ruhezustand des Rechners, solange ein Wecker aktiv ist',
+            powerActive: '✓ Ruhezustand des Rechners wird verhindert',
             wakeFromSleep: 'Aus Ruhezustand aufwecken',
             checking: 'Wird geprüft…',
-            wakeHelperDescription: 'Installiert einen Systemdienst, der den Mac vor einem Wecktermin aus dem Ruhezustand aufweckt.',
+            wakeHelperDescription: 'Installiert einen Systemdienst, der den Rechner vor einem Wecktermin aus dem Ruhezustand aufweckt.',
             installHelper: 'Systemdienst installieren',
             uninstallHelper: 'Systemdienst entfernen',
             installing: 'Wird installiert…',
@@ -132,22 +132,6 @@ const I18n = (() => {
         }
     };
 
-    /// Texte, die unter Linux vom Mac-Wortlaut abweichen.
-    const platformTranslations = {
-        linux: {
-            en: {
-                powerInactive: 'Prevents your computer from sleeping while an alarm is active',
-                powerActive: '✓ Computer sleep is being prevented',
-                wakeHelperDescription: 'Installs a system service that wakes your computer from suspend before an alarm rings.'
-            },
-            de: {
-                powerInactive: 'Verhindert den Ruhezustand des Rechners, solange ein Wecker aktiv ist',
-                powerActive: '✓ Ruhezustand des Rechners wird verhindert',
-                wakeHelperDescription: 'Installiert einen Systemdienst, der den Rechner vor einem Wecktermin aus dem Ruhezustand aufweckt.'
-            }
-        }
-    };
-
     let currentLanguage = 'en';
 
     function getNestedValue(object, path) {
@@ -162,10 +146,7 @@ const I18n = (() => {
     }
 
     function t(key, values = {}) {
-        const platformTexts = platformTranslations[window.WeckPilotPlatform];
-        const value = getNestedValue(platformTexts?.[currentLanguage], key)
-            ?? getNestedValue(platformTexts?.en, key)
-            ?? getNestedValue(translations[currentLanguage], key)
+        const value = getNestedValue(translations[currentLanguage], key)
             ?? getNestedValue(translations.en, key)
             ?? key;
         if (typeof value !== 'string') return key;
@@ -190,20 +171,10 @@ const I18n = (() => {
         if (selector) selector.value = currentLanguage;
     }
 
-    /// Die macOS-Menueleiste wird in Rust gebaut und kennt den localStorage
-    /// nicht. Deshalb wird die tatsaechlich aktive Sprache dorthin gemeldet.
-    function syncMenuLanguage() {
-        const invoke = window.__TAURI__?.core?.invoke;
-        if (!invoke) return;
-        invoke('set_menu_language', { language: currentLanguage })
-            .catch(error => console.warn('Menu language could not be updated:', error));
-    }
-
     function setLanguage(language, persist = true) {
         currentLanguage = language === 'de' ? 'de' : 'en';
         if (persist) localStorage.setItem(STORAGE_KEY, currentLanguage);
         apply();
-        syncMenuLanguage();
         window.dispatchEvent(new CustomEvent('weckpilot-language-changed', {
             detail: { language: currentLanguage }
         }));
@@ -212,7 +183,6 @@ const I18n = (() => {
     function init() {
         currentLanguage = detectLanguage();
         apply();
-        syncMenuLanguage();
         document.getElementById('language-select')?.addEventListener('change', event => {
             setLanguage(event.target.value);
         });

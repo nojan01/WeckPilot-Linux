@@ -1,13 +1,13 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "WeckPilot",
-  "version": "1.1.8",
-  "identifier": "com.alarmmaster.clock",
+  "mainBinaryName": "weckpilot",
+  "version": "1.0.0",
+  "identifier": "de.little-tools.weckpilot.linux",
   "build": {
     "frontendDist": "../dist"
   },
   "app": {
-    "macOSPrivateApi": true,
     "withGlobalTauri": true,
     "windows": [
       {
@@ -19,7 +19,12 @@
         "center": true,
         "decorations": false,
         "transparent": true,
-        "backgroundColor": [0, 0, 0, 0],
+        "backgroundColor": [
+          0,
+          0,
+          0,
+          0
+        ],
         "shadow": false,
         "alwaysOnTop": false,
         "visible": true,
@@ -32,21 +37,37 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": [
+      "deb",
+      "appimage",
+      "rpm"
+    ],
     "copyright": "Copyright © 2026 Norbert Jander",
     "publisher": "Norbert Jander",
-    "macOS": {
-      "signingIdentity": "Developer ID Application: Norbert Jander (TXF2V79Z6N)"
-    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/icon.png"
     ],
     "category": "Utility",
-    "shortDescription": "WeckPilot – modern alarm clock with weekly schedules",
-    "longDescription": "WeckPilot is a modern alarm clock with a digital display, multiple alarms per day, weekly schedules, gradually increasing volume, and English/German interface languages."
+    "shortDescription": "WeckPilot – modern alarm clock for Linux",
+    "longDescription": "WeckPilot is a modern alarm clock with a digital display, multiple alarms per day, weekly schedules, gradually increasing volume, and English/German interface languages.",
+    "linux": {
+      "deb": {
+        "depends": [
+          "systemd",
+          "util-linux",
+          "pkexec | policykit-1"
+        ]
+      },
+      "rpm": {
+        "depends": [
+          "systemd",
+          "util-linux",
+          "polkit"
+        ]
+      }
+    }
   }
 }

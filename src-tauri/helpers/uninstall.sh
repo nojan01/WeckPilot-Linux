@@ -1,66 +1,28 @@
 #!/bin/bash
 #
-# WeckPilot Wake Helper - Uninstaller
-# Removes the wake helper daemon and binary.
-# Must be run with root privileges.
+# WeckPilot Wake Helper - Linux uninstaller
+# Must run as root (WeckPilot starts it via pkexec).
 #
 
-set -e
+LIB_DIR="/usr/local/lib/weckpilot"
+UNIT_DIR="/etc/systemd/system"
+SHARED_DIR="/var/lib/weckpilot"
 
-HELPER_NAME="WeckPilotWakeHelper"
-PLIST_NAME="de.little-tools.weckpilot.wake-helper.plist"
-ASSERT_PLIST_NAME="de.little-tools.weckpilot.wake-assert.plist"
-INSTALL_DIR="/usr/local/bin"
-PLIST_DIR="/Library/LaunchDaemons"
-SHARED_DIR="/Users/Shared/WeckPilot"
-LEGACY_HELPER_NAME="AlarmMasterWakeHelper"
-LEGACY_PLIST_NAME="com.alarmmaster.wake-helper.plist"
-LEGACY_ASSERT_PLIST_NAME="com.alarmmaster.wake-assert.plist"
-LEGACY_SHARED_DIR="/Users/Shared/AlarmMaster"
+echo "=== WeckPilot Wake Helper Uninstaller (Linux) ==="
 
-echo "=== WeckPilot Wake Helper Uninstaller ==="
-
-# 1. Cancel any scheduled wake events
-if [ -f "$SHARED_DIR/state.json" ]; then
-    echo "Cancelling scheduled wake events..."
-    # Read last scheduled wake from state
-    LAST_WAKE=$(python3 -c "import json; d=json.load(open('$SHARED_DIR/state.json')); print(d.get('lastScheduledWake',''))" 2>/dev/null || true)
-    if [ -n "$LAST_WAKE" ]; then
-        pmset schedule cancel wakeorpoweron "$LAST_WAKE" 2>/dev/null || true
-        echo "Cancelled wake event: $LAST_WAKE"
-    fi
+if [ "$(id -u)" -ne 0 ]; then
+    echo "ERROR: must be run as root"
+    exit 1
 fi
 
-# 2. Unload daemons
-echo "Unloading daemon..."
-launchctl unload "$PLIST_DIR/$PLIST_NAME" 2>/dev/null || true
-launchctl unload "$PLIST_DIR/$ASSERT_PLIST_NAME" 2>/dev/null || true
-launchctl unload "$PLIST_DIR/$LEGACY_PLIST_NAME" 2>/dev/null || true
-launchctl unload "$PLIST_DIR/$LEGACY_ASSERT_PLIST_NAME" 2>/dev/null || true
+systemctl disable --now weckpilot-wake.path 2>/dev/null || true
+systemctl disable weckpilot-wake.service 2>/dev/null || true
 
-# 3. Remove files
-echo "Removing files..."
-rm -f "$INSTALL_DIR/$HELPER_NAME"
-rm -f "$PLIST_DIR/$PLIST_NAME"
-rm -f "$PLIST_DIR/$ASSERT_PLIST_NAME"
-rm -f "$INSTALL_DIR/$LEGACY_HELPER_NAME"
-rm -f "$PLIST_DIR/$LEGACY_PLIST_NAME"
-rm -f "$PLIST_DIR/$LEGACY_ASSERT_PLIST_NAME"
+rm -f "$UNIT_DIR/weckpilot-wake.path" "$UNIT_DIR/weckpilot-wake.service"
+systemctl daemon-reload
 
-# 4. Optionally clean shared directory
-rm -f "$SHARED_DIR/state.json"
-rm -f "$SHARED_DIR/schedule.json"
-rm -f "$SHARED_DIR/helper.log"
-rm -f "$SHARED_DIR/launchd-stdout.log"
-rm -f "$SHARED_DIR/launchd-stderr.log"
-rmdir "$SHARED_DIR" 2>/dev/null || true
-rm -f "$LEGACY_SHARED_DIR/state.json"
-rm -f "$LEGACY_SHARED_DIR/schedule.json"
-rm -f "$LEGACY_SHARED_DIR/helper.log"
-rm -f "$LEGACY_SHARED_DIR/launchd-stdout.log"
-rm -f "$LEGACY_SHARED_DIR/launchd-stderr.log"
-rmdir "$LEGACY_SHARED_DIR" 2>/dev/null || true
+rtcwake -m disable >/dev/null 2>&1 || true
 
-echo ""
+rm -rf "$LIB_DIR" "$SHARED_DIR"
+
 echo "=== Uninstallation Complete ==="
-echo "Wake helper has been removed."

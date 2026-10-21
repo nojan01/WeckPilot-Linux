@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Tests for weckpilot-wake-apply with a fake rtcwake.
-# Usage: bash src-tauri/helpers/linux/test-wake-apply.sh
+# Usage: bash src-tauri/helpers/test-wake-apply.sh
 #
 
 set -u

@@ -1,10 +1,10 @@
 [package]
-name = "app"
-version = "1.1.8"
-description = "A modern alarm clock with weekly schedules for macOS and Linux"
+name = "weckpilot"
+version = "1.0.0"
+description = "A modern alarm clock with weekly schedules for Linux"
 authors = ["Norbert Jander"]
 license = "MIT"
-repository = "https://github.com/nojan01/WeckPilot"
+repository = "https://github.com/nojan01/WeckPilot-Linux"
 edition = "2021"
 rust-version = "1.77.2"
 
@@ -21,10 +21,8 @@ tauri-build = { version = "2.5.5", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.10.2", features = ["macos-private-api", "unstable"] }
+tauri = { version = "2.10.2", features = ["unstable"] }
 tauri-plugin-log = "2"
 tauri-plugin-shell = "2"
 chrono = "0.4"
-
-[target.'cfg(target_os = "linux")'.dependencies]
 zbus = "5"

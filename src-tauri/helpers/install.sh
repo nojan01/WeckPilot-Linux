@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# WeckPilot Wake Helper - Installer
-# Compiles the Swift helper and installs it as a LaunchDaemon.
-# Must be run with root privileges (via osascript with administrator privileges).
+# WeckPilot Wake Helper - Linux installer
+# Installs a systemd path/service pair that programs the RTC wake alarm.
+# Must run as root (WeckPilot starts it via pkexec).
 #
 # Usage: install.sh <source-directory>
 #
@@ -10,110 +10,70 @@
 set -e
 
 SOURCE_DIR="${1:-.}"
-HELPER_NAME="WeckPilotWakeHelper"
-PLIST_NAME="de.little-tools.weckpilot.wake-helper.plist"
-HELPER_LABEL="de.little-tools.weckpilot.wake-helper"
-INSTALL_DIR="/usr/local/bin"
-PLIST_DIR="/Library/LaunchDaemons"
-SHARED_DIR="/Users/Shared/WeckPilot"
-LEGACY_HELPER_NAME="AlarmMasterWakeHelper"
-LEGACY_PLIST_NAME="com.alarmmaster.wake-helper.plist"
-LEGACY_HELPER_LABEL="com.alarmmaster.wake-helper"
-LEGACY_SHARED_DIR="/Users/Shared/AlarmMaster"
+LIB_DIR="/usr/local/lib/weckpilot"
+UNIT_DIR="/etc/systemd/system"
+SHARED_DIR="/var/lib/weckpilot"
+SCHEDULE_FILE="$SHARED_DIR/schedule.json"
+OWNER_UID="${PKEXEC_UID:-${SUDO_UID:-}}"
 
-echo "=== WeckPilot Wake Helper Installer ==="
-echo "Source directory: $SOURCE_DIR"
+echo "=== WeckPilot Wake Helper Installer (Linux) ==="
 
-# 1. Create shared directory
-echo "Creating shared directory..."
-mkdir -p "$SHARED_DIR"
-chmod 777 "$SHARED_DIR"
-
-# Preserve an existing schedule from versions released as AlarmMaster.
-if [ -d "$LEGACY_SHARED_DIR" ]; then
-    for FILE_NAME in schedule.json state.json; do
-        if [ -f "$LEGACY_SHARED_DIR/$FILE_NAME" ] && [ ! -f "$SHARED_DIR/$FILE_NAME" ]; then
-            cp "$LEGACY_SHARED_DIR/$FILE_NAME" "$SHARED_DIR/$FILE_NAME"
-            chmod 666 "$SHARED_DIR/$FILE_NAME"
-        fi
-    done
-fi
-
-# 2. Unload existing daemon if present
-if launchctl list | grep -q "$HELPER_LABEL"; then
-    echo "Unloading existing daemon..."
-    launchctl unload "$PLIST_DIR/$PLIST_NAME" 2>/dev/null || true
-fi
-if launchctl list | grep -q "$LEGACY_HELPER_LABEL"; then
-    echo "Migrating legacy wake helper..."
-    launchctl unload "$PLIST_DIR/$LEGACY_PLIST_NAME" 2>/dev/null || true
-fi
-rm -f "$INSTALL_DIR/$LEGACY_HELPER_NAME" "$PLIST_DIR/$LEGACY_PLIST_NAME"
-
-# 3. Check for Swift compiler
-if ! command -v swiftc &>/dev/null; then
-    echo "ERROR: Swift compiler not found!"
-    echo "Please install Xcode Command Line Tools: xcode-select --install"
+if [ "$(id -u)" -ne 0 ]; then
+    echo "ERROR: must be run as root"
     exit 1
 fi
 
-# 4. Compile Swift helper
-echo "Compiling helper..."
-SWIFT_SOURCE="$SOURCE_DIR/WeckPilotWakeHelper.swift"
+for TOOL in systemctl rtcwake; do
+    if ! command -v "$TOOL" >/dev/null 2>&1; then
+        echo "ERROR: required tool not found: $TOOL"
+        exit 1
+    fi
+done
 
-if [ ! -f "$SWIFT_SOURCE" ]; then
-    echo "ERROR: Swift source not found at: $SWIFT_SOURCE"
-    exit 1
+if [ ! -e /sys/class/rtc/rtc0/wakealarm ]; then
+    echo "WARNING: /sys/class/rtc/rtc0/wakealarm not found, waking from suspend may not work"
 fi
 
-swiftc "$SWIFT_SOURCE" -o "/tmp/$HELPER_NAME" -O -whole-module-optimization
+for FILE_NAME in weckpilot-wake-apply weckpilot-wake.service weckpilot-wake.path; do
+    if [ ! -f "$SOURCE_DIR/$FILE_NAME" ]; then
+        echo "ERROR: $FILE_NAME not found in $SOURCE_DIR"
+        exit 1
+    fi
+done
 
-# 5. Install binary
-echo "Installing binary to $INSTALL_DIR/$HELPER_NAME..."
-mkdir -p "$INSTALL_DIR"
-cp "/tmp/$HELPER_NAME" "$INSTALL_DIR/$HELPER_NAME"
-chown root:wheel "$INSTALL_DIR/$HELPER_NAME"
-chmod 755 "$INSTALL_DIR/$HELPER_NAME"
-rm -f "/tmp/$HELPER_NAME"
-
-# 6. Install LaunchDaemon plist
-echo "Installing LaunchDaemon..."
-PLIST_SOURCE="$SOURCE_DIR/$PLIST_NAME"
-
-if [ ! -f "$PLIST_SOURCE" ]; then
-    echo "ERROR: Plist not found at: $PLIST_SOURCE"
-    exit 1
+# The directory stays root-owned so the user can only rewrite schedule.json,
+# not replace it or the root-written log with symlinks.
+echo "Creating $SHARED_DIR..."
+install -d -o root -g root -m 755 "$SHARED_DIR"
+if [ ! -f "$SCHEDULE_FILE" ] || [ -L "$SCHEDULE_FILE" ]; then
+    rm -f "$SCHEDULE_FILE"
+    printf '{\n  "nextWake": null,\n  "enabled": false,\n  "alarmTime": null,\n  "label": null\n}\n' > "$SCHEDULE_FILE"
 fi
+if [ -n "$OWNER_UID" ]; then
+    chown "$OWNER_UID" "$SCHEDULE_FILE"
+fi
+chmod 644 "$SCHEDULE_FILE"
 
-cp "$PLIST_SOURCE" "$PLIST_DIR/$PLIST_NAME"
-chown root:wheel "$PLIST_DIR/$PLIST_NAME"
-chmod 644 "$PLIST_DIR/$PLIST_NAME"
+echo "Installing helper to $LIB_DIR..."
+install -d -o root -g root -m 755 "$LIB_DIR"
+install -o root -g root -m 755 "$SOURCE_DIR/weckpilot-wake-apply" "$LIB_DIR/weckpilot-wake-apply"
 
-# 7. Load daemon
-echo "Loading daemon..."
-launchctl load "$PLIST_DIR/$PLIST_NAME"
+echo "Installing systemd units..."
+install -o root -g root -m 644 "$SOURCE_DIR/weckpilot-wake.service" "$UNIT_DIR/weckpilot-wake.service"
+install -o root -g root -m 644 "$SOURCE_DIR/weckpilot-wake.path" "$UNIT_DIR/weckpilot-wake.path"
 
-# 8. Verify installation
+systemctl daemon-reload
+systemctl enable weckpilot-wake.service
+systemctl enable --now weckpilot-wake.path
+systemctl start weckpilot-wake.service || true
+
 echo ""
 echo "=== Installation Verification ==="
-if [ -f "$INSTALL_DIR/$HELPER_NAME" ]; then
-    echo "✓ Binary installed: $INSTALL_DIR/$HELPER_NAME"
+if systemctl is-active --quiet weckpilot-wake.path; then
+    echo "✓ Schedule watcher active"
 else
-    echo "✗ Binary NOT found"
+    echo "✗ Schedule watcher NOT active"
+    exit 1
 fi
 
-if [ -f "$PLIST_DIR/$PLIST_NAME" ]; then
-    echo "✓ LaunchDaemon installed: $PLIST_DIR/$PLIST_NAME"
-else
-    echo "✗ LaunchDaemon NOT found"
-fi
-
-if launchctl list | grep -q "$HELPER_LABEL"; then
-    echo "✓ Daemon loaded and running"
-else
-    echo "⚠ Daemon loaded but not yet triggered (will run when schedule changes)"
-fi
-
-echo ""
 echo "=== Installation Complete ==="
-echo "The helper will automatically wake your Mac when an alarm is scheduled."
