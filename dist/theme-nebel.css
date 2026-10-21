@@ -84,8 +84,9 @@ html.nebel #next-alarm-text {
 }
 
 html.nebel #next-alarm-text.alarm-set {
-    color: var(--nebel-darkest);
-    background: var(--digit-color);
+    color: var(--digit-color);
+    background: #4a4a4a;
+    text-shadow: 0 0 6px var(--digit-glow);
 }
 
 html.nebel .format-button,
