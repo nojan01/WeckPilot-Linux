@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "WeckPilot",
   "mainBinaryName": "weckpilot",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "identifier": "de.little-tools.weckpilot.linux",
   "build": {
     "frontendDist": "../dist"
@@ -27,7 +27,7 @@
         ],
         "shadow": false,
         "alwaysOnTop": false,
-        "visible": true,
+        "visible": false,
         "dragDropEnabled": true
       }
     ],

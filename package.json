@@ -1,6 +1,6 @@
 {
   "name": "weckpilot-linux",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A modern alarm clock for Linux with flexible alarms, weekly schedules, and English/German interface languages.",
   "main": "index.html",
   "scripts": {

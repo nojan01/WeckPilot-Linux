@@ -22,6 +22,9 @@ Die macOS-Version wird getrennt im Repository
 - legt den nächsten Wecker in `~/.config/weckpilot/next-alarm.json` ab; das
   Uhr-Desklet des Cinnamon-Themas [Nebel](https://github.com/nojan01/Cinnamon_Theme)
   zeigt ihn an
+- läuft auf Wunsch unsichtbar im Hintergrund: Knopf „Ausblenden“ (⌄) oder Start mit
+  `weckpilot --hidden`; beim Klingeln erscheint das Fenster von selbst, ein erneuter
+  Aufruf von `weckpilot` holt es nach vorn
 - Energieverwaltung, die den Ruhezustand verhindert, solange ein Wecker aktiv ist
 - optionaler Wake-Helper, der den Rechner für einen Alarm aus dem Ruhezustand
   aufweckt
@@ -32,7 +35,7 @@ WeckPilot wird als `.deb`-Paket, AppImage und `.rpm` gebaut. Unter Debian,
 Ubuntu und Linux Mint:
 
 ```bash
-sudo apt install ./WeckPilot_1.0.3_amd64.deb
+sudo apt install ./WeckPilot_1.0.4_amd64.deb
 ```
 
 Benötigt werden WebKitGTK 4.1, systemd, `rtcwake` (util-linux) und `pkexec`

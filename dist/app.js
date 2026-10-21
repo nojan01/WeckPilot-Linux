@@ -36,6 +36,7 @@ let editingAlarmId = null;
 let currentlyRingingAlarm = null;
 let lastTriggeredMinuteKey = null;
 const triggeredAlarmIds = new Set(); // Verhindert doppeltes Auslösen pro Alarm und Minute
+const wokenAlarmIds = new Set(); // Bildschirm nur einmal pro Alarm aufwecken
 let use24HourFormat = true; // 24-Stunden-Format
 
 // Sleep Mode Einstellungen
@@ -108,6 +109,7 @@ function checkAlarms(now) {
     if (lastTriggeredMinuteKey !== currentMinuteKey) {
         lastTriggeredMinuteKey = currentMinuteKey;
         triggeredAlarmIds.clear();
+        wokenAlarmIds.clear();
     }
     
     const alarms = AlarmManager.getAlarms();
@@ -122,8 +124,10 @@ function checkAlarms(now) {
         const nowTotalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + currentSeconds;
         const secondsUntilAlarm = alarmTotalSeconds - nowTotalSeconds;
         
-        // 30 Sekunden vorher: Bildschirm aufwecken (Bereich 25-35 Sekunden)
-        if (secondsUntilAlarm >= 25 && secondsUntilAlarm <= 35 && currentSeconds === 30 && tauriInvoke) {
+        // Etwa 30 Sekunden vorher: Bildschirm aufwecken. Kein exakter Sekundenvergleich,
+        // weil WebKit die Timer bei ausgeblendetem Fenster auf etwa 2 s drosselt.
+        if (secondsUntilAlarm >= 25 && secondsUntilAlarm <= 35 && !wokenAlarmIds.has(alarm.id) && tauriInvoke) {
+            wokenAlarmIds.add(alarm.id);
             console.log('Waking screen, alarm in', secondsUntilAlarm, 'seconds');
             tauriInvoke('wake_screen').catch(err => console.log('Wake screen error:', err));
         }
@@ -141,8 +145,28 @@ function checkAlarms(now) {
 /**
  * Alarm auslösen
  */
+// Fenster beim Klingeln zeigen und danach wieder ausblenden, falls es vorher verborgen war
+let hiddenBeforeAlarm = false;
+
+async function showWindowForAlarm() {
+    if (!tauriInvoke) return;
+    try {
+        if (!(await tauriInvoke('is_window_visible'))) hiddenBeforeAlarm = true;
+        await tauriInvoke('show_window');
+    } catch (err) {
+        console.error('Show window error:', err);
+    }
+}
+
+function hideWindowAfterAlarm() {
+    if (!hiddenBeforeAlarm || !tauriInvoke) return;
+    hiddenBeforeAlarm = false;
+    tauriInvoke('hide_window').catch(err => console.error('Hide window error:', err));
+}
+
 function triggerAlarm(alarm) {
     currentlyRingingAlarm = alarm;
+    showWindowForAlarm();
     
     // UI aktualisieren
     alarmDisplayTime.textContent = alarm.time;
@@ -181,6 +205,7 @@ function dismissAlarm() {
     renderAlarms();
     updateNextAlarm();
     syncWakeSchedule();
+    hideWindowAfterAlarm();
 }
 
 /**
@@ -206,6 +231,7 @@ function snoozeAlarm() {
     // Status aktualisieren
     nextAlarmText.textContent = t('snoozeMinutes', { minutes: snoozeDuration });
     nextAlarmText.classList.add('alarm-set');
+    hideWindowAfterAlarm();
 }
 
 /**
@@ -545,6 +571,16 @@ function setupEventListeners() {
                 settingsPanel.classList.toggle('visible');
             }
         });
+    }
+
+    const hideBtn = document.getElementById('hide-btn');
+    if (hideBtn && tauriInvoke) {
+        hideBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tauriInvoke('hide_window').catch(err => console.error('Hide window error:', err));
+        });
+    } else if (hideBtn) {
+        hideBtn.hidden = true;
     }
 
     if (quitBtn) {

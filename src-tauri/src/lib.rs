@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tauri::Manager;
 
 mod linux;
 
@@ -217,9 +218,42 @@ fn set_ui_scale(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> 
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+/// Holt das Fenster nach vorn (Klingeln, zweiter Programmstart, Klick aufs Desklet).
+fn show_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
+}
+
+#[tauri::command]
+fn show_window(app: tauri::AppHandle) {
+    show_main_window(&app);
+}
+
+/// Blendet das Fenster aus; die App laeuft weiter und weckt.
+#[tauri::command]
+fn hide_window(window: tauri::WebviewWindow) -> Result<(), String> {
+    window.hide().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn is_window_visible(window: tauri::WebviewWindow) -> bool {
+    window.is_visible().unwrap_or(true)
+}
+
+/// `--hidden`: unsichtbar starten (Autostart); geweckt wird trotzdem.
+fn start_hidden(args: &[String]) -> bool {
+    args.iter().any(|a| a == "--hidden")
+}
+
 pub fn run() {
     // Kein Menue: GTK wuerde es als Leiste in das rahmenlose Fenster haengen.
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_main_window(app);
+        }))
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             prevent_sleep,
@@ -232,7 +266,10 @@ pub fn run() {
             install_wake_helper,
             uninstall_wake_helper,
             update_wake_schedule,
-            set_ui_scale
+            set_ui_scale,
+            show_window,
+            hide_window,
+            is_window_visible
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {
@@ -241,6 +278,10 @@ pub fn run() {
                         .level(log::LevelFilter::Info)
                         .build(),
                 )?;
+            }
+            let args: Vec<String> = std::env::args().collect();
+            if !start_hidden(&args) {
+                show_main_window(app.handle());
             }
             Ok(())
         })
@@ -261,6 +302,12 @@ mod tests {
         assert!(wake > chrono::Local::now().naive_local());
 
         assert!(next_wake_time(24, 0).is_err());
+    }
+
+    #[test]
+    fn start_hidden_nur_mit_schalter() {
+        assert!(start_hidden(&["weckpilot".into(), "--hidden".into()]));
+        assert!(!start_hidden(&["weckpilot".into()]));
     }
 
     #[test]
