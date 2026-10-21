@@ -182,6 +182,35 @@ fn next_wake_time(hour: u8, minute: u8) -> Result<(String, String), String> {
     ))
 }
 
+// ============================================================
+// Fenstergroesse
+// ============================================================
+
+/// Muss zur Fenstergroesse in `tauri.conf.json` passen.
+const BASE_WINDOW_SIZE: (f64, f64) = (700.0, 650.0);
+const UI_SCALES: [f64; 4] = [0.5, 0.75, 1.0, 1.25];
+
+fn validate_ui_scale(scale: f64) -> Result<f64, String> {
+    UI_SCALES
+        .iter()
+        .copied()
+        .find(|allowed| (allowed - scale).abs() < 1e-6)
+        .ok_or_else(|| format!("Unsupported scale {}", scale))
+}
+
+/// Zoomt die Oberflaeche und passt das Fenster an, damit nichts abgeschnitten wird.
+#[tauri::command]
+fn set_ui_scale(window: tauri::WebviewWindow, scale: f64) -> Result<(), String> {
+    let scale = validate_ui_scale(scale)?;
+    window.set_zoom(scale).map_err(|e| e.to_string())?;
+    window
+        .set_size(tauri::LogicalSize::new(
+            BASE_WINDOW_SIZE.0 * scale,
+            BASE_WINDOW_SIZE.1 * scale,
+        ))
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Kein Menue: GTK wuerde es als Leiste in das rahmenlose Fenster haengen.
@@ -197,7 +226,8 @@ pub fn run() {
             get_wake_helper_status,
             install_wake_helper,
             uninstall_wake_helper,
-            update_wake_schedule
+            update_wake_schedule,
+            set_ui_scale
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {
@@ -226,6 +256,16 @@ mod tests {
         assert!(wake > chrono::Local::now().naive_local());
 
         assert!(next_wake_time(24, 0).is_err());
+    }
+
+    #[test]
+    fn validate_ui_scale_erlaubt_nur_die_stufen() {
+        for scale in [0.5, 0.75, 1.0, 1.25] {
+            assert_eq!(validate_ui_scale(scale), Ok(scale));
+        }
+        for scale in [0.0, 0.25, 1.5, 2.0, -1.0, f64::NAN] {
+            assert!(validate_ui_scale(scale).is_err(), "{scale} darf nicht gehen");
+        }
     }
 
     #[test]

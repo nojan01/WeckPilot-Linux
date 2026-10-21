@@ -8,6 +8,7 @@ const I18n = (() => {
     const translations = {
         en: {
             language: 'Language',
+            size: '🔍 Window size',
             settings: 'Settings',
             quit: 'Quit WeckPilot',
             toggleTimeFormat: 'Toggle 12/24-hour format',
@@ -70,6 +71,7 @@ const I18n = (() => {
         },
         de: {
             language: 'Sprache',
+            size: '🔍 Fenstergröße',
             settings: 'Einstellungen',
             quit: 'WeckPilot beenden',
             toggleTimeFormat: 'Zwischen 12- und 24-Stunden-Format wechseln',

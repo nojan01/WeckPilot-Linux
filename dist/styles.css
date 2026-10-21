@@ -428,6 +428,10 @@ body {
     margin: 0;
 }
 
+.size-section .sleep-mode-header {
+    margin-bottom: 0;
+}
+
 /* Toggle Switch */
 .toggle-switch {
     position: relative;

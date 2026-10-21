@@ -1038,6 +1038,39 @@ async function syncWakeSchedule() {
 }
 
 // Initialisierung
+// ==================== FENSTERGROESSE ====================
+const UI_SCALE_KEY = 'weckpilot-ui-scale';
+const UI_SCALES = [0.5, 0.75, 1, 1.25];
+
+function savedUiScale() {
+    const scale = Number(localStorage.getItem(UI_SCALE_KEY));
+    return UI_SCALES.includes(scale) ? scale : 1;
+}
+
+async function applyUiScale(scale) {
+    if (!tauriInvoke) return;
+    try {
+        await tauriInvoke('set_ui_scale', { scale });
+    } catch (error) {
+        console.warn('UI scale could not be applied:', error);
+    }
+}
+
+function initUiScale() {
+    const select = document.getElementById('scale-select');
+    const scale = savedUiScale();
+    if (select) {
+        select.value = String(scale);
+        select.addEventListener('change', () => {
+            const value = Number(select.value);
+            if (!UI_SCALES.includes(value)) return;
+            localStorage.setItem(UI_SCALE_KEY, String(value));
+            applyUiScale(value);
+        });
+    }
+    if (scale !== 1) applyUiScale(scale);
+}
+
 function init() {
     // DOM-Elemente initialisieren
     hour1El = document.getElementById('hour1');
@@ -1094,6 +1127,7 @@ function init() {
     
     // Wake Helper initialisieren
     initWakeHelper();
+    initUiScale();
     
     // Caffeinate alle 10 Stunden erneuern (wenn aktiviert)
     setInterval(() => {
