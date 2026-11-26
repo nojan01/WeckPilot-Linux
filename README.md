@@ -35,12 +35,18 @@ WeckPilot wird als `.deb`-Paket, AppImage und `.rpm` gebaut. Unter Debian,
 Ubuntu und Linux Mint:
 
 ```bash
-sudo apt install ./WeckPilot_1.0.4_amd64.deb
+sudo apt install ./WeckPilot_1.0.5_amd64.deb
 ```
 
 Benötigt werden WebKitGTK 4.1, systemd, `rtcwake` (util-linux) und `pkexec`
 (polkit). Das Debian-Paket zieht diese Abhängigkeiten automatisch nach.
-Getestet wurde unter Linux Mint 22 mit Cinnamon.
+Der Programmstart wurde unter Linux Mint 22.3 und Mint 27 geprüft, außerdem
+mit Ubuntu-26.04-Bibliotheken unter X11 und Wayland in einer isolierten Testumgebung.
+
+Ab Version 1.0.5 wählt WeckPilot automatisch den kompatiblen WebKitGTK-Renderpfad,
+um unsichtbare Fenster wie beim Test in VirtualBox zu vermeiden. Das gilt für
+Menüstart, Autostart und direkte Aufrufe unter X11 und Wayland. Eine explizit
+gesetzte Umgebungsvariable `WEBKIT_DISABLE_DMABUF_RENDERER` hat Vorrang.
 
 ## Energieverwaltung und Wake-Helper
 
